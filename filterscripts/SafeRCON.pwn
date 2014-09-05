@@ -1,7 +1,7 @@
 /*
 
 ================================================================================
-							SafeRCON - v1
+							SafeRCON - v1.1
 							 By fall3n
 							 
 SafeRCON ensures that your RCON is protected well enough. This filterscript
@@ -71,7 +71,18 @@ NOTES:
 
 GitHub release link:
 https://github.com/falle3n/SafeRCON
-  
+
+Changelogs:
+
+v1.1
+
+- Added : Timer to check if player has logged in as second RCON or not within
+		  the given time.
+
+
+v1.0
+
+- Initial release.
   
 ================================================================================        */
 
@@ -111,6 +122,7 @@ https://github.com/falle3n/SafeRCON
 //                          Configuration defines
 //==============================================================================
 
+#define		MAX_SECONDRCON_WAIT_SEC 40 //Maximum SECONDS to wait for the second RCON password to be given once if requested. 40 is actually more, set it according to the complexity of your pass.
 #define     SECOND_RCON_PASS        "pleaSeChangeThisPassword123" //The second RCON pass.
 
 //Set to "false" to disable the feature, "true" to enable.
@@ -152,7 +164,8 @@ new
 	
 	bool:g_IsPlayerRconEx[MAX_PLAYERS],
 	SR_pDialog[MAX_PLAYERS],
-	SR_pWrongLogins[MAX_PLAYERS];
+	SR_pWrongLogins[MAX_PLAYERS],
+	SR_pTimer[MAX_PLAYERS];
 	
 
 public OnPlayerConnect(playerid)
@@ -160,6 +173,7 @@ public OnPlayerConnect(playerid)
 	g_IsPlayerRconEx[playerid] = false;
 	SR_pDialog[playerid] = -1;
 	SR_pWrongLogins[playerid] = 0;
+	SR_pTimer[playerid] = -1;
 	return 1;
 }
 
@@ -480,6 +494,35 @@ public OnPlayerRconLogin(playerid)
 	type in the second RCON password to continue.", pName);
 	ShowPlayerDialog(playerid, DIALOG_SECOND_RCON, DIALOG_STYLE_PASSWORD, "SafeRCON - Second RCON", string, "Login", "Quit");
 	SR_pDialog[playerid] = DIALOG_SECOND_RCON;
+	SR_pTimer[playerid] = SetTimerEx("SRIsSecondRconLoggedIn", MAX_SECONDRCON_WAIT_SEC*1000, false, "d", playerid);
+	return 1;
+}
+
+forward SRIsSecondRconLoggedIn(playerid);
+public SRIsSecondRconLoggedIn(playerid)
+{
+	if(IsPlayerAdmin(playerid))
+	{
+	    if(IsPlayerRconEx(playerid))
+	    {
+			SR_pTimer[playerid] = -1;
+		}
+		else
+		{
+			SR_pTimer[playerid] = -1;
+			Kick(playerid);
+		}
+	}
+	return 1;
+}
+
+public OnPlayerDisconnect(playerid, reason)
+{
+	if(SR_pTimer[playerid] != -1)
+	{
+	    KillTimer(SR_pTimer[playerid]);
+	    SR_pTimer[playerid] = -1;
+	}
 	return 1;
 }
 
@@ -1127,4 +1170,5 @@ public OnFilterScriptInit()
 	SafeRCONInit();
 	return 1;
 }
+
 
