@@ -886,7 +886,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 		
 		#endif
 	}
-	return 1;
+	return 0;
 }
 
 public OnRconCommand(cmd[])
